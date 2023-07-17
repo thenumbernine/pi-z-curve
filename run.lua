@@ -1,7 +1,7 @@
 #!/bin/env luajit
 require 'ext'
 local Image = require 'image'
-local digits = file'pi':read()
+local digits = path'pi':read()
 assert(#digits == 131072)
 
 -- 131072 bytes ... 2^8 * 2^9
