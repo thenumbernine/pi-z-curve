@@ -11,10 +11,10 @@ local function unravel(i)
 	for b=0,31 do
 		if (i >> b) & 1 == 1 then	-- set bit?
 			if b & 1 == 0 then	-- even bit index == x coord
-				-- TODO can't use xor-assign because it would be ~= which is also the not-equals of Lua ... hmmmmm
-				x = x ~ (1 << (b >> 1))
+				-- can't use xor-assign because it would be ~= which is also the not-equals of Lua ... hmmmmm
+				x ~~= (1 << (b >> 1))
 			else	-- odd bit index == y coord
-				y = y ~ (1 << ((b-1) >> 1))
+				y ~~= (1 << ((b-1) >> 1))
 			end
 		end
 	end
