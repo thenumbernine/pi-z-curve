@@ -1,0 +1,86 @@
+#!/bin/env rua
+local Image = require 'image'
+local digits = path'pi':read()
+assert(#digits == 131072)
+
+-- 131072 bytes ... 2^8 * 2^9
+-- 1048576 bits ... 2^10 * 2^10
+
+local function unravel(i)
+	local x,y = 0,0
+	for b=0,31 do
+		if (i >> b) & 1 == 1 then	-- set bit?
+			if b & 1 == 0 then	-- even bit index == x coord
+				-- TODO can't use xor-assign because it would be ~= which is also the not-equals of Lua ... hmmmmm
+				x = x ~ (1 << (b >> 1))
+			else	-- odd bit index == y coord
+				y = y ~ (1 << ((b-1) >> 1))
+			end
+		end
+	end
+	return x,y
+end
+
+--[[ verify z-curve works
+local img = Image(1024, 1024, 3, 'unsigned char')
+for i=0,img.width * img.height do
+	local x,y = unravel(i)
+	--print(i, x, y)
+	local b = 6	-- use 6 bits per channel from the index
+	local mask = (1 << b) - 1	-- mask for 6 bits
+	local p = 8 - b	-- how much to pad the channels
+	img.buffer[0 + img.channels * (x + img.width * y)] = (mask & i) << p
+	img.buffer[1 + img.channels * (x + img.width * y)] = (mask & (i >> b)) << p
+	img.buffer[2 + img.channels * (x + img.width * y)] = (mask & (i >> (b << 1))) << p
+end
+img:save'z-curve.png'
+--]]
+
+-- [[ outputting binary image of z-curve pi
+local img = Image(1024, 1024, 3, 'unsigned char')
+for i=1,#digits do	-- i = 1-based byte index in string
+	local byte = digits:byte(i)
+	for j=0,7 do	-- j = 0-based bit index within byte
+		local k = j + 8 * (i - 1)	-- k = 0-based bit index in string
+		if (byte >> j) & 1 == 1 then
+			local x, y = unravel(k)
+			if x < img.width and y < img.height then
+				for ch=0,img.channels-1 do
+					img.buffer[ch + img.channels * (x + img.width * y)] = 255
+				end
+			end
+		end
+	end
+end
+img:save'pi-binary.png'
+--]]
+
+-- TODO base 3 , but that means calculating pi in base 3 ... 
+
+--[[ outputting binary image of z-curve pi
+local img = Image(512, 256, 3, 'unsigned char')
+for i=0,#digits-1 do	-- i = 0-based byte index in string
+	local b = digits:byte(i+1)
+	local x, y = unravel(i)
+	if x < img.width and y < img.height then
+		for ch=0,img.channels-1 do
+			img.buffer[ch + img.channels * (x + img.width * y)] = b
+		end
+	end
+end
+img:save'pi-hex-grey.png'
+--]]
+
+--[[ outputting binary image of z-curve pi as hex color
+local img = Image(512, 512, 3, 'unsigned char')
+for i=0,#digits-1 do	-- i = 0-based byte index in string
+	local b = digits:byte(i+1)
+	local ch = i % 3
+	local j = math.floor(i / 3)
+	local x, y = unravel(j)
+	if x < img.width and y < img.height then
+		img.buffer[ch + img.channels * (x + img.width * y)] = b
+	end
+end
+img:save'pi-hex-color.png'
+--]]
