@@ -6,7 +6,7 @@ assert(#digits == 131072)
 -- 131072 bytes ... 2^8 * 2^9
 -- 1048576 bits ... 2^10 * 2^10
 
-local unravel = [i] do
+local unravel = |i| do
 	local x,y = 0,0
 	for b=0,31 do
 		if (i >> b) & 1 == 1 then	-- set bit?
